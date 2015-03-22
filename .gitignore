@@ -52,4 +52,8 @@ docs/_build/
 
 # PyBuilder
 target/
-reports/
+
+#vtclass
+reports/*
+md5_completed.txt
+md5_list.txt
