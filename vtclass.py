@@ -10,7 +10,7 @@ import string
 
 class vtAPI():
     def __init__(self):
-        self.api = 'XXXXXXXXXXXX' #insert your API here
+        self.api = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'  #insert your API here
         self.base = 'https://www.virustotal.com/vtapi/v2/'
     
     def getReport(self,md5):
@@ -59,17 +59,19 @@ def parse(it, md5, verbose, jsondump, classify):
 
   if classify == True:
     count_all = Counter()
-    results = ""
+    results = []
     for x in it['scans']:
       if it['scans'][x]['detected'] == True:
-        temp_result = it['scans'][x]['result']
-        results = results + " " + str([temp_result.encode('UTF8')])
-    extra = ['-','\[\'',':','.','\'\]','\/','!']
-    rx = '[' + re.escape(''.join(extra)) + ']'
-    final_ready = re.sub(rx,' ', results).replace('  ',' ')
-    final = Counter(final_ready.split())
-    print 'Guess: ', list(dict((k,v) for k,v in final.iteritems() if v > it['positives']/2).keys())
-    print 'All results: ', final
+        temp_result = x.encode('UTF8'),str(it['scans'][x]['result'].encode('UTF8')).replace('/','.').replace(':','.').replace('W32','Win32').replace('BehavesLike.','').replace('PE.','').replace('Virus.','')
+        #print temp_result
+        results.append(temp_result)
+    counts = Counter(results)
+    print(counts)
+    #rx = '[' + re.escape(''.join(extra)) + ']'
+    #final_ready = re.sub(rx,' ', results).replace('  ',' ')
+    #final = Counter(final_ready.split())
+    #print 'Guess: ', list(dict((k,v) for k,v in final.iteritems() if v > it['positives']/2).keys())
+    #print 'All results: ', final
 
 
 def main():
@@ -84,7 +86,7 @@ def main():
   options= opt.parse_args()
   vt=vtAPI()
   md5 = checkMD5(options.HashorPath)
-  if options.search or options.jsondump or options.verbose or options.classify:
+  if options.jsondump or options.verbose or options.classify:
     parse(vt.getReport(md5), md5 ,options.verbose, options.jsondump, options.classify)
 
 if __name__ == '__main__':
