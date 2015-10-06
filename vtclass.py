@@ -8,9 +8,10 @@ import operator
 from collections import Counter
 import string
 
+
 class vtAPI():
     def __init__(self):
-        self.api = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'  #insert your API here
+        self.api = '' #insert API key here
         self.base = 'https://www.virustotal.com/vtapi/v2/'
     
     def getReport(self,md5):
@@ -62,17 +63,64 @@ def parse(it, md5, verbose, jsondump, classify):
     results = []
     for x in it['scans']:
       if it['scans'][x]['detected'] == True:
-        temp_result = x.encode('UTF8'),str(it['scans'][x]['result'].encode('UTF8')).replace('/','.').replace(':','.').replace('W32','Win32').replace('BehavesLike.','').replace('PE.','').replace('Virus.','')
-        #print temp_result
+        temp_result = x.encode('UTF8'),normalize(str(it['scans'][x]['result'].encode('UTF8'))),score(x.encode('UTF8'))
+        print temp_result
         results.append(temp_result)
+    #print results
     counts = Counter(results)
-    print(counts)
+    #print(counts)
     #rx = '[' + re.escape(''.join(extra)) + ']'
     #final_ready = re.sub(rx,' ', results).replace('  ',' ')
     #final = Counter(final_ready.split())
     #print 'Guess: ', list(dict((k,v) for k,v in final.iteritems() if v > it['positives']/2).keys())
     #print 'All results: ', final
 
+def normalize(input):
+  output = re.sub('adware','Adware',input,flags=re.I)
+  output = re.sub('backdoor','Backdoor',output,flags=re.I)
+  output = re.sub('worm','Worm',output,flags=re.I)
+  output = re.sub('trojan','Trojan',output,flags=re.I)
+  output = re.sub('hacktool','HackTool',output,flags=re.I)
+  output = output.replace('I-Worm.','Worm:').replace('W32','Win32').replace('BehavesLike.','')
+  output = output.replace('-gen','/Generic')
+  output = output.replace('Win32:','Win32/')
+  output = output.replace('PE.','').replace('PE:','').replace('PE_','')
+  output = output.replace('Adware/','Adware:').replace('Adware.','Adware:')
+  output = output.replace('Virus/','Virus:').replace('Virus.','Virus:')
+  output = output.replace('Worm/','Worm:').replace('Worm.','Worm:').replace('Worm_','Worm:')
+  output = output.replace('Trojan/','Trojan:').replace('Trojan.','Trojan:')
+  output = output.replace('Backdoor/','Backdoor:').replace('Backdoor.','Backdoor:')
+  output = output.replace('Win32/Adware:','Adware:Win32/')
+  output = output.replace('Win32/Trojan:','Trojan:Win32/')
+  output = output.replace('Win32/Virus:','Virus:Win32/')
+  output = output.replace('Win32/Backdoor:','Backdoor:Win32/')
+  output = output.replace('Win32.','Win32/')
+  output = output.replace('not-a-virus:','')
+  output = output.replace('a variant of ','')
+  if re.match("\.Worm'", output):
+     output = output.replace(".Worm","").replace(" \'","Worm:")
+  if re.match("\.Trojan'", output):
+     output = output.replace(".Trojan","").replace(" \'","Trojan:")
+  output = output.replace(':.',':')
+
+  return output
+
+def score(input):
+  av_scores = {"ALYac": .5, "Ad-Aware": .5, "AegisLab": .5, "Agnitum": .5, "AhnLab-V3": .5, \
+               "Alibaba": .5, "Antiy-AVL": .5, "Arcabit": .5, "Avast": .5, "AVG": .5, \
+               "Avira": .5, "AVware": .5, "Baidu-International": .5, "BitDefender": .5, "Bkav": .5, \
+               "ByteHero": .5, "CAT-QuickHeal": .5, "ClamAV": .5, "CMC": .5, "Comodo": .5, \
+               "Cyren": .5, "DrWeb": .5, "Emsisoft": .5, "ESET-NOD32": .5, "Fortinet": .5, \
+               "F-Prot": .5, "F-Secure": .5, "GData": .5, "Ikarus": .5, "Jiangmin": .5, \
+               "K7AntiVirus": .5, "K7GW": .5, "Kaspersky": .5, "Kingsoft": .5, "Malwarebytes": .5, \
+               "McAfee": .5, "McAfee-GW-Edition": .5, "Microsoft": .5, "MicroWorld-eScan": .5, \
+               "NANO-Antivirus": .5, "nProtect": .5, "Panda": .5, "Qihoo-360": .5, "Rising": .5, \
+               "Sophos": .5, "SUPERAntiSpyware": .5, "Symantec": .5, "Tencent": .5, "TheHacker": .5, \
+               "TotalDefense": .5, "TrendMicro": .5, "TrendMicro-HouseCall": .5, "VBA32": .5, \
+               "VIPRE": .5, "ViRobot": .5, "Zillya": .5, "Zoner": .5 \
+              }
+  weight = av_scores.get(input,.5)
+  return weight
 
 def main():
   opt=argparse.ArgumentParser(description="Search VirusTotal")
